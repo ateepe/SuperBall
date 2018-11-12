@@ -109,4 +109,10 @@ class SuperBall:
     def isGoal(self, index):
         return self.goals[index];
     
-        
+    def print(self):
+        for r in range(self.numRows):
+            for c in range(self.numCols):
+                index = r * self.numCols + c;
+                print(self.board[index], end=" ");
+            print(""); # newline
+        print("");
