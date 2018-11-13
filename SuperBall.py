@@ -22,6 +22,20 @@ class SuperBall:
 
         self.totalScore = 0
 
+    def canScore(self, row, col):
+        index = row * self.numCols + col
+
+        if (not self.goals[index] or self.board[index] == '.'):
+            return False
+
+        djSet = self.getDJSet()
+        setSize = djSet.getSetSize(index)
+
+        if setSize < self.minSetSize:
+            return False
+
+        return True
+
     def score(self, row, col):
         index = row * self.numCols + col
 
@@ -51,6 +65,14 @@ class SuperBall:
 
         return score
 
+    def canSawp(self, row1, col1, row2, col2):
+        index1 = row1 * self.numCols + col1
+        index2 = row2 * self.numCols + col2
+
+        if self.board[index1] == '.' or self.board[index2] == '.':
+            return False
+        
+        return True
 
     def swap(self, row1, col1, row2, col2):
         index1 = row1 * self.numCols + col1
