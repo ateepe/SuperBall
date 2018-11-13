@@ -5,7 +5,7 @@ class DisjointSet:
 
     def __init__(self, n):
         self.links = np.array([-1 for i in range(n)]);
-        self.sizes = np.array([0 for i in range(n)]);
+        self.sizes = np.array([1 for i in range(n)]);
 
     def getSetID(self, element):
         root = element;
