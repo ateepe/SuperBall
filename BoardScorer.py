@@ -1,6 +1,16 @@
 import DisjointSet
 
-def analyze_board(board, goals, nRows, nCols, mss=5):
+default_goals = \
+	[False, False, False, False, False, False, False, False, False, False,\
+	False, False, False, False, False, False, False, False, False, False,\
+	True, True, False, False, False, False, False, False, True, True,\
+	True, True, False, False, False, False, False, False, True, True,\
+	True, True, False, False, False, False, False, False, True, True,\
+	True, True, False, False, False, False, False, False, True, True,\
+	False, False, False, False, False, False, False, False, False, False,\
+	False, False, False, False, False, False, False, False, False, False ] 
+
+def analyze_board(board, goals=default_goals, nRows=8, nCols=10, mss=5):
     score_pos = (-1, -1)
 
     djSet = DisjointSet.DisjointSet(nRows * nCols)
