@@ -16,7 +16,11 @@ def print_data(data):
 			print(data[r*10+c], end=' ')
 		print()
 
-def save_npz(outfile, num_samples=10000):
+# TensorFlow dataset format:
+# x_train, y_train, x_test, y_test
+# Where x is the chararray board input and y is the score of that board from Alex's algorithm
+def save_npz(outfile, num_training_samples=60000, num_testing_samples=10000):
+	
 
 	for n in range(num_samples):
 		print()
