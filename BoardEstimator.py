@@ -4,19 +4,22 @@ import BoardScorer
 
 def CreateNetwork(numRows=8, numCols=10, numColors=5):
 
-    board_column = tf.feature_column.numeric_column(key='board', shape=[numColors+1, numRows * numCols], dtype=tf.int8)
+    board_column = tf.feature_column.numeric_column(key='board', shape=[numColors+1, numRows, numCols], dtype=tf.int8)
 
     all_columns = [board_column]
 
-    model_dir = "./savestate"
+    model_dir = "./savestate3"
 
     num_inputs = numRows*numCols*(numColors+1)
 
+    run_config = tf.estimator.RunConfig(model_dir=model_dir, save_summary_steps=10000, save_checkpoints_steps=None, save_checkpoints_secs=None, keep_checkpoint_max=1, log_step_count_steps=1000000)
+
     nn = tf.estimator.DNNRegressor(
         feature_columns=all_columns,
-        hidden_units=(num_inputs, num_inputs),
+        hidden_units=[num_inputs, num_inputs, num_inputs],
         model_dir=model_dir,
-        label_dimension=1
+        label_dimension=1,
+        config=run_config
     )
 
     return nn
@@ -27,19 +30,27 @@ def board_to_tensor(board, colors=['.', 'p', 'b', 'y', 'r', 'g']):
 
     for c in range(0, len(colors)):
         piece = []
-        for i in range(len(board)):
-            if board[i] == colors[c]:
-                piece.append(1)
-            else:
-                piece.append(0)
-        
+        #for i in range(len(board)):
+        #    if board[i] == colors[c]:
+        #        piece.append(1)
+        #    else:
+        #        piece.append(0)
+        for r in range(8):
+            row = []
+            for col in range(10):
+                if board[r*10+col] == colors[c]:
+                    row.append(1)
+                else:
+                    row.append(0)
+            piece.append(row)
+
         tensor.append(piece)
 
     return tensor
 
 # converts a batch of inputs (features) and their expected values (labels) and returns a chunk
 # of data in a format the network can use to train itself
-def train_input_fn(boards, scores, batch_size=1000, repetitions=10):
+def train_input_fn(boards, scores, batch_size=5000, repetitions=5):
 
     formatted_boards = []
 
@@ -51,9 +62,11 @@ def train_input_fn(boards, scores, batch_size=1000, repetitions=10):
     dataset = tf.data.Dataset.from_tensor_slices((features, scores))
 
     # Shuffle, repeat, and batch the examples.
-    dataset = dataset.shuffle(batch_size)
+    #dataset = dataset.shuffle(batch_size)
     dataset = dataset.repeat(repetitions)
     dataset = dataset.batch(batch_size)
+    #dataset = dataset.shuffle(len(formatted_boards))
+    #dataset = dataset.batch(len(formatted_boards))
 
     # Return the dataset.
     return dataset
@@ -98,7 +111,7 @@ if __name__ == "__main__":
     for i in range(0, 100):
         batch_boards = []
         batch_scores = []
-        for j in range(0, 10000):
+        for j in range(0, 100000):
             b = list(BoardGen.gen_random_data())
             batch_boards.append(b)
             batch_scores.append(BoardScorer.analyze_board(b)[0])
