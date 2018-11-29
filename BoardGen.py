@@ -143,20 +143,21 @@ if __name__ == "__main__":
 	# Code to test the larger sets board generator
 	# TODO --> Question: does this generator behave like the completely random one
 	#          when the max_set_size is set to 1?
-	board = gen_large_set_data()
-	score, score_pos = bs.analyze_board(board)
-	print_data(board)
-	print(score)
-	exit()
+	
+	# board = gen_large_set_data()
+	# score, score_pos = bs.analyze_board(board)
+	# print_data(board)
+	# print(score)
+	# exit()
 
 	# Test the board generation/save/load
-	save_npz(num_training_samples=2, num_testing_samples=2)
+	save_npz(num_training_samples=1000, num_testing_samples=2)
 	(x_train, y_train), (x_test, y_test) = load_data()
-	print('x_train')
-	print(x_train)
-	print('y_train')
-	print(y_train)
-	print('x_test')
-	print(x_test)
-	print('y_test')
-	print(y_test)
+	print('x_train:', x_train.shape)
+	# print(x_train)
+	print('y_train:', y_train.shape)
+	# print(y_train)
+	print('x_test:', x_test.shape)
+	# print(x_test)
+	print('y_test:', y_test.shape)
+	# print(y_test)

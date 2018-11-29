@@ -15,7 +15,7 @@ import BoardGen as bg
 # tiles = ['.', 'p', 'b', 'y', 'r', 'g']
 tiles = ['p', 'b', 'y', 'r', 'g']
 
-def build_model(channel_length=80, data_shape=(8, 10, 1)):
+def build_model(channel_length=80, data_shape=(8, 10, 1), conv_filters=32):
     """
 
     The shape of the input data has to be a tuple:
@@ -28,35 +28,35 @@ def build_model(channel_length=80, data_shape=(8, 10, 1)):
 
     # Channel 1 - first binary tile color
     input_1 = Input(shape=data_shape)
-    conv_1 = Conv2D(32, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=data_shape)(input_1)
+    conv_1 = Conv2D(filters=conv_filters, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=data_shape)(input_1)
     drop_1 = Dropout(0.5)(conv_1)
     pool_1 = MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(drop_1)
     flat_1 = Flatten()(pool_1)
 
     # Channel 2 - second binary tile color
     input_2 = Input(shape=data_shape)
-    conv_2 = Conv2D(32, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=data_shape)(input_2)
+    conv_2 = Conv2D(filters=conv_filters, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=data_shape)(input_2)
     drop_2 = Dropout(0.5)(conv_2)
     pool_2 = MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(drop_2)
     flat_2 = Flatten()(pool_2)
 
     # Channel 3 - third binary tile color
     input_3 = Input(shape=data_shape)
-    conv_3 = Conv2D(32, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=data_shape)(input_3)
+    conv_3 = Conv2D(filters=conv_filters, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=data_shape)(input_3)
     drop_3 = Dropout(0.5)(conv_3)
     pool_3 = MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(drop_3)
     flat_3 = Flatten()(pool_3)
 
     # Channel 4 - fourth binary tile color
     input_4 = Input(shape=data_shape)
-    conv_4 = Conv2D(32, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=data_shape)(input_4)
+    conv_4 = Conv2D(filters=conv_filters, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=data_shape)(input_4)
     drop_4 = Dropout(0.5)(conv_4)
     pool_4 = MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(drop_4)
     flat_4 = Flatten()(pool_4)
 
     # Channel 5 - fifth binary tile color
     input_5 = Input(shape=data_shape)
-    conv_5 = Conv2D(32, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=data_shape)(input_5)
+    conv_5 = Conv2D(filters=conv_filters, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=data_shape)(input_5)
     drop_5 = Dropout(0.5)(conv_5)
     pool_5 = MaxPooling2D(pool_size=(2, 2), strides=(2, 2))(drop_5)
     flat_5 = Flatten()(pool_5)
@@ -80,7 +80,7 @@ def build_model(channel_length=80, data_shape=(8, 10, 1)):
     return model
 
 
-# Function to parse the board and split it into binary inputs
+# Function to parse a single board and split it into binary inputs
 def split_input(board):
     inputs = np.zeros((len(tiles), len(board)), dtype='int_')
     for t in range(len(tiles)):
@@ -90,14 +90,68 @@ def split_input(board):
     bg.print_data(inputs[1])
     return inputs
 
+# Function to parse a dataset of boards and split them into binary inputs
+def split_inputs(dataset, input_shape=(8, 10, 1)):
+    
+    # There is a separate list for each of the different tile colors
+    separated_data = [[] for t in range(len(tiles))]
 
-# data = bg.gen_random_data()
-# print()
-# bg.print_data(data)
-# print()
-# split_input(data)
-# print()
+    # For each input board split it into the different binary boards
+    for i in range(len(dataset)):
+        for t in range(len(tiles)):
+            binary_board = np.zeros(len(dataset[i]), dtype='int_')
+            for b in range(len(dataset[i])):
+                if (dataset[i][b] == tiles[t]):
+                    binary_board[b] = 1
+            separated_data[t].append(binary_board.reshape(input_shape))
 
-build_model()
+    # Convert each list of binary boards to numpy array
+    separated_data = [np.array(x) for x in separated_data]
+    return separated_data
+
+
+# Load a random board dataset from BoardGen.py
+(train_data, train_labels), (test_data, test_labels) = bg.load_data()
+print(train_data.shape)
+
+# Split the data into 5 sets of binary boards
+separated_data = split_inputs(train_data)
+print('len of separated data:', len(separated_data))
+print('shape of separated_data[0]:', separated_data[0].shape)
+# print(separated_data)
+
+# Normalize the labels to values between -1 and 1
+# Uses a Gaussian distribution
+mean = train_labels.mean(axis=0)
+std = train_labels.std(axis=0)
+# train_labels = (train_labels - mean) / std
+# print('mean', mean, 'std', std)
+
+
+# Normalize the labels to values between 0 and 1
+x_min = train_labels.min(axis=0)
+x_max = train_labels.max(axis=0)
+x_dif = x_max - x_min
+train_labels = (train_labels - x_min) / x_dif
+print('min', x_min)
+print('max', x_max)
+print(train_labels[0])
+
+
+EPOCHS = 100
+model = build_model()
+model.fit([x for x in separated_data], train_labels, epochs=EPOCHS, batch_size=2)
+
+separated_test_data = split_inputs(test_data)
+predictions = model.predict([x for x in separated_test_data]).flatten()
+# predictions = [(predictions[i]*std)+mean for i in range(len(predictions))]
+predictions = [(predictions[i]*x_dif)+x_min for i in range(len(predictions))]
+
+print('mean:', mean)
+print('std:', std)
+print('predicted:', predictions)
+print('actual:', test_labels)
+
+
 
 
