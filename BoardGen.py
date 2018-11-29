@@ -79,20 +79,17 @@ def print_data(data):
 			print(data[r*10+c], end=' ')
 		print()
 
-def save_npz(path='datasets/randomBoards.npz', gen_function=gen_random_data, num_training_samples=60000, num_testing_samples=10000):
-	"""Save randomly generated boards and scores as training/testing data.
-
-	Generates boards randomly using the gen_random_data() function (make
-	the data generation function modular?) and then saves the generated
-	boards in a .npz file representing training and testing data for
-	neural networks.
+def generate_dataset(gen_function=gen_random_data, num_training_samples=60000, num_testing_samples=10000):
+	"""Return generated boards and scores as training/testing data.
 
 	Arguments:
-		path (str): The path to the .npz file to save.
+		gen_function (function name): The name of the function used to
+		                              generate a dataset.
 		num_training_samples (int): The number of training samples to generate.
 		num_testing_samples (int): The numebr of testing samples to generate.
+	Returns:
+		(tuple), (tuple): Numpy arrays with the training and test data.
 	"""
-
 	x_train = []
 	y_train = []
 	for n in range(num_training_samples):
@@ -115,9 +112,22 @@ def save_npz(path='datasets/randomBoards.npz', gen_function=gen_random_data, num
 	np.array(x_test)
 	np.array(y_test)
 
-	# Save the arrays to a .npz file
-	np.savez(path, x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
+	return (x_train, y_train), (x_test, y_test)
 
+def save_npz(path='datasets/randomBoards.npz', x_train, y_train, x_test, y_test):
+	"""Save randomly generated boards and scores as training/testing data.
+
+	Saves a dataset of training and testing boards/scores to a .npz file
+	given by the location in the path argument.
+
+	Arguments:
+		path (str): The path to the .npz file to save.
+		x_train (numpy array): Training boards.
+		y_train (numpy array): Training board scores.
+		x_test (numpy array): Testing boards.
+		y_test (numpy array): Testing board scores.
+	"""
+	np.savez(path, x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
 	return
 
 def load_data(path='datasets/randomBoards.npz'):
@@ -151,13 +161,12 @@ if __name__ == "__main__":
 	# exit()
 
 	# Test the board generation/save/load
-	save_npz(gen_function=gen_large_set_data, num_training_samples=1000, num_testing_samples=2)
-	(x_train, y_train), (x_test, y_test) = load_data()
-	print('x_train:', x_train.shape)
-	# print(x_train)
-	print('y_train:', y_train.shape)
-	# print(y_train)
-	print('x_test:', x_test.shape)
-	# print(x_test)
-	print('y_test:', y_test.shape)
-	# print(y_test)
+
+	# THIS STUFF IS OUT OF DATE AFTER UPDATING THE BOARD GENERATION FUNCTION
+
+	# save_npz(gen_function=gen_large_set_data, num_training_samples=1000, num_testing_samples=2)
+	# (x_train, y_train), (x_test, y_test) = load_data()
+	# print('x_train:', x_train.shape)
+	# print('y_train:', y_train.shape)
+	# print('x_test:', x_test.shape)
+	# print('y_test:', y_test.shape)
