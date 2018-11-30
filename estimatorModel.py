@@ -133,7 +133,7 @@ def define_model(filters=32, shape=(8, 10, 5)):
         MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),
         Flatten(),
         Dense(64, activation='relu'),
-        Dense(1)
+        Dense(1) # Default activation is linear: y(x)=x
     ])
     model.compile(loss='mse', optimizer='adam', metrics=['mse', 'mae', 'mape'])
     print(model.summary())
