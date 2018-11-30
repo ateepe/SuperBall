@@ -114,7 +114,7 @@ def generate_dataset(gen_function=gen_random_data, num_training_samples=60000, n
 
 	return (x_train, y_train), (x_test, y_test)
 
-def save_npz(path='datasets/randomBoards.npz', x_train, y_train, x_test, y_test):
+def save_npz(x_train, y_train, x_test, y_test, path='datasets/randomBoards.npz'):
 	"""Save randomly generated boards and scores as training/testing data.
 
 	Saves a dataset of training and testing boards/scores to a .npz file
@@ -139,7 +139,6 @@ def load_data(path='datasets/randomBoards.npz'):
 
 	Arguments:
 		path (str): The path to the .npz file to load.
-
 	Returns:
 		(tuple), (tuple): Numpy arrays with the training and test data.
 	"""
@@ -170,3 +169,4 @@ if __name__ == "__main__":
 	# print('y_train:', y_train.shape)
 	# print('x_test:', x_test.shape)
 	# print('y_test:', y_test.shape)
+	pass
