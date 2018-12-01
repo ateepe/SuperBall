@@ -1,9 +1,21 @@
 import numpy as np
 import DisjointSet
 
+default_goals = \
+    [False, False, False, False, False, False, False, False, False, False,\
+    False, False, False, False, False, False, False, False, False, False,\
+    True, True, False, False, False, False, False, False, True, True,\
+    True, True, False, False, False, False, False, False, True, True,\
+    True, True, False, False, False, False, False, False, True, True,\
+    True, True, False, False, False, False, False, False, True, True,\
+    False, False, False, False, False, False, False, False, False, False,\
+    False, False, False, False, False, False, False, False, False, False] 
+
+default_colors = ['p', 'b', 'y', 'r', 'g']
+
 class SuperBall:
 
-    def __init__(self, nRows, nCols, goals, colors, minSetSize):
+    def __init__(self, nRows=8, nCols=10, goals=default_goals, colors=default_colors, minSetSize=5):
         self.numRows = nRows
         self.numCols = nCols
         self.numTiles = nRows * nCols
@@ -21,6 +33,15 @@ class SuperBall:
             self.goals[row*self.numCols + col] = True
 
         self.totalScore = 0
+
+        self.spawnTiles(5) # initialize game with 5 tiles
+
+    def StartGame(self):
+        self.board = np.array(['.' for i in range(self.numTiles)])
+        self.numOpenTiles = self.numTiles
+        self.totalScore = 0
+
+        self.spawnTiles(5)
 
     def canScore(self, row, col):
         index = row * self.numCols + col
