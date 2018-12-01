@@ -139,7 +139,7 @@ def define_model(filters=32, shape=(8, 10, 5)):
     print(model.summary())
     return model
 
-
+# THIS FUNCTION ASSUMES A DATASET LARGER THAN 1, WHICH COULD CAUSE PROBLEMS FOR ONLINE LEARNING
 def split_into_channels(dataset):
     """A function to split each board into 5 binary color channels.
 

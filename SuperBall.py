@@ -86,7 +86,7 @@ class SuperBall:
 
         return score
 
-    def canSawp(self, row1, col1, row2, col2):
+    def canSwap(self, row1, col1, row2, col2):
         index1 = row1 * self.numCols + col1
         index2 = row2 * self.numCols + col2
 
