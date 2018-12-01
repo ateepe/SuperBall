@@ -28,9 +28,8 @@ class SuperBall:
         self.goals = np.array([False for i in range(self.numTiles)])
         self.colors = colors
 
-        for pos in goals:
-            row, col = pos
-            self.goals[row*self.numCols + col] = True
+        for i in range(len(goals)):
+            self.goals[i] = goals[i]
 
         self.totalScore = 0
 

@@ -12,7 +12,7 @@ from tensorflow.keras.models import Sequential, load_model
 
 class RLPlayer:
 
-    def __init__(self, nRows, nCols, goals, colors, minSetSize):
+    def __init__(self, nRows=8, nCols=10, goals=SuperBall.default_goals, colors=SuperBall.default_colors, minSetSize=5):
         self.game = SuperBall.SuperBall(nRows, nCols, goals, colors, minSetSize);
 
         # actions = pick any two tiles and swap them, or any of the goal tiles and try to score
@@ -33,6 +33,8 @@ class RLPlayer:
     def generate_episode(self):
         self.game.StartGame()
 
+        print(self.game.board)
+
         while not self.game.gameOver:
 
             starting_board = np.copy(self.game.board)
@@ -40,13 +42,32 @@ class RLPlayer:
             reward = 0
 
             if self.game.numOpenTiles < 5:
-                pass
-                #attempt to score
+                best_score = self.choose_score(self.game.board)
+
+                # no score possible, end of game
+                if best_score is None:
+                    reward = -1
+                    self.game.gameOver = True
+                    intermediate_board = self.game.board
+                
+                else:
+                    (score_row, score_col) = best_score[0]
+                    intermediate_board = best_score[1]
+
+                    print("scoring", (score_row, score_col))
+
+                    reward = self.game.score(score_row, score_col)
+
+                    if reward <= 0:
+                        print("something messed up, tried to score when we can't")
+                        exit(0)
 
             else:
                 swap, intermediate_board = self.choose_swap(self.game.board)
                 
                 (r1, c1), (r2, c2) = swap
+
+                print("Swapping", (r1, c1), "and", (r2, c2))
 
                 if self.game.swap(r1, c1, r2, c2):
                     reward = 0
@@ -58,6 +79,8 @@ class RLPlayer:
             starting_score = self.get_board_score(starting_board)
             intermediate_score = self.get_board_score(intermediate_board)
             final_score = self.get_board_score(final_board)
+
+            print(self.game.board)
 
             # TODO: add to training data and train after episode over
 
@@ -83,7 +106,7 @@ class RLPlayer:
                     swaps.append( ((r1, c1), (r2, c2)) )
                     potential_boards.append(swapped_board)
 
-        predictions = self.nn.predict(potential_boards).flatten()
+        predictions = self.nn.predict(estimatorModel.split_into_channels(potential_boards)).flatten()
 
         best_index = predictions.argmax()
 
@@ -92,7 +115,41 @@ class RLPlayer:
     # returns scored tile and resulting board
     #  ( (row, col), board )
     def choose_score(self, board):
-        # TODO: choose which set to score
+        djset = self.game.getDJSet()
+
+        score_tiles = []
+        score_boards = []
+
+        for i in range(0, self.game.numTiles):
+            if self.game.isGoal(i) and board[i] != '.':
+                setID = djset.getSetID(i)
+                setSize = djset.getSetSize(i)
+                if setSize >= self.game.minSetSize:
+                    new_board = np.copy(board)
+
+                    for j in range(0, self.game.numTiles):
+                        if djset.getSetID(j) == setID:
+                            new_board[j] = '.'
+
+                    r = int(i // self.game.numCols)
+                    c = int(i % self.game.numCols)
+                    
+                    score_tiles.append((r, c))
+                    score_boards.append(new_board)
+
+        # find best board after scoring
+        if len(score_tiles) > 0:
+            features = estimatorModel.split_into_channels(score_boards)
+            predictions = self.nn.predict(features).flatten()
+
+            best_index = predictions.argmax()
+
+            return (score_tiles[best_index], score_boards[best_index])
+        
+        # can't score
+        else:
+            return None
+
         pass
     
     def get_board_score(self, board):
@@ -105,4 +162,6 @@ class RLPlayer:
         pass
 
 if __name__ == "__main__":
-    pass
+    player = RLPlayer()
+
+    player.generate_episode()
