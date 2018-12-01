@@ -76,10 +76,16 @@ class RLPlayer:
         
             final_board = np.copy(self.game.board)
 
+            '''
             starting_score = self.get_board_score(starting_board)
             intermediate_score = self.get_board_score(intermediate_board)
             final_score = self.get_board_score(final_board)
-
+            '''
+            scores = self.get_board_scores([starting_board, intermediate_board, final_board])
+            starting_score = scores[0]
+            intermediate_score = scores[1]
+            final_score = scores[2]
+            
             print(self.game.board)
 
             # TODO: add to training data and train after episode over
@@ -151,7 +157,12 @@ class RLPlayer:
             return None
 
         pass
-    
+
+    def get_board_scores(self, boards):
+        features = estimatorModel.split_into_channels(boards)
+        score = self.nn.predict(features).flatten()
+        return score
+
     def get_board_score(self, board):
         features = estimatorModel.split_into_channels([board])
         score = self.nn.predict(features).flatten()[0]
