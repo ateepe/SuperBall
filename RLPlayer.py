@@ -14,6 +14,7 @@ class RLPlayer:
 
     def __init__(self, nRows=8, nCols=10, goals=SuperBall.default_goals, colors=SuperBall.default_colors, minSetSize=5):
         self.game = SuperBall.SuperBall(nRows, nCols, goals, colors, minSetSize);
+        self.discount_factor = 0.95
 
         # actions = pick any two tiles and swap them, or any of the goal tiles and try to score
         #           if any action can't be taken, just allow the machine to take it but nothing happens and there is no reward
@@ -33,7 +34,10 @@ class RLPlayer:
     def generate_episode(self):
         self.game.StartGame()
 
-        print(self.game.board)
+        #print(self.game.board)
+
+        train_boards = []
+        train_labels = []
 
         while not self.game.gameOver:
 
@@ -85,10 +89,18 @@ class RLPlayer:
             starting_score = scores[0]
             intermediate_score = scores[1]
             final_score = scores[2]
-            
-            print(self.game.board)
 
-            # TODO: add to training data and train after episode over
+
+            train_boards.append(starting_board)
+            train_labels.append(reward + self.discount_factor * intermediate_score)
+
+            train_boards.append(intermediate_board)
+            train_labels.append(0 + self.discount_factor * final_score)
+            
+            #print(self.game.board)
+
+        print("end episode with score of", self.game.totalScore)
+        return (train_boards, train_labels)
 
     # returns swapped indices and resulting board
     #  ( (index1, index2), board )
@@ -175,4 +187,11 @@ class RLPlayer:
 if __name__ == "__main__":
     player = RLPlayer()
 
-    player.generate_episode()
+    while True:
+        train_boards, train_labels = player.generate_episode()
+
+        train_features = estimatorModel.split_into_channels(train_boards)
+        
+        player.nn.fit(train_features, train_labels, epochs=10, batch_size=len(train_labels))
+
+        player.nn.save("RLPlayer.h5")

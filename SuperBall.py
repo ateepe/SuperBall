@@ -39,6 +39,7 @@ class SuperBall:
         self.board = np.array(['.' for i in range(self.numTiles)])
         self.numOpenTiles = self.numTiles
         self.totalScore = 0
+        self.gameOver = False
 
         self.spawnTiles(5)
 
