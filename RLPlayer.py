@@ -66,6 +66,8 @@ class RLPlayer:
                         print("something messed up, tried to score when we can't")
                         exit(0)
 
+                    reward = 1 #override to ignore actual value of scoring set and just train to score more sets
+
             else:
                 swap, intermediate_board = self.choose_swap(self.game.board)
                 
@@ -83,7 +85,7 @@ class RLPlayer:
             if self.game.gameOver:
                 train_boards.append(starting_board)
                 train_labels.append(-1)
-            
+                            
             else:
                 '''
                 starting_score = self.get_board_score(starting_board)
@@ -96,12 +98,11 @@ class RLPlayer:
                 final_score = scores[2]
 
 
-            train_boards.append(starting_board)
-            train_labels.append(reward + self.discount_factor * intermediate_score)
+                reward = 0 # override reward of 0 for all things that are not losing 
+                train_boards.append(starting_board)
+                train_labels.append(reward + self.discount_factor * final_score)
 
-            train_boards.append(intermediate_board)
-            train_labels.append(0 + self.discount_factor * final_score)
-            
+
             #print(self.game.board)
 
         print("end episode with score of", self.game.totalScore)
@@ -193,10 +194,17 @@ if __name__ == "__main__":
     player = RLPlayer()
 
     while True:
-        train_boards, train_labels = player.generate_episode()
+        train_boards = []
+        train_labels = []
+        
+        # generate a few episodes at a time so it can train on a larger set of data
+        for i in range(0, 10):
+            boards, labels = player.generate_episode()
+            train_boards = train_boards + boards
+            train_labels = train_labels + labels
 
         train_features = estimatorModel.split_into_channels(train_boards)
         
-        player.nn.fit(train_features, train_labels, epochs=10, batch_size=len(train_labels))
+        player.nn.fit(train_features, train_labels, epochs=5, batch_size=64)
 
         player.nn.save("RLPlayer.h5")

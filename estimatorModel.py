@@ -130,7 +130,7 @@ def define_model(filters=32, shape=(8, 10, 5)):
     model = Sequential([
         Conv2D(filters=filters, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=shape),
         Dropout(0.5),
-        MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),
+        #MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),
         Flatten(),
         Dense(64, activation='relu'),
         Dense(1) # Default activation is linear: y(x)=x
