@@ -1,6 +1,7 @@
 import SuperBall
 import numpy as np
 import estimatorModel
+import BoardScorer
 
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D
@@ -14,7 +15,7 @@ class RLPlayer:
 
     def __init__(self, nRows=8, nCols=10, goals=SuperBall.default_goals, colors=SuperBall.default_colors, minSetSize=5):
         self.game = SuperBall.SuperBall(nRows, nCols, goals, colors, minSetSize);
-        self.discount_factor = 0.95
+        self.discount_factor = 0.9
 
         # actions = pick any two tiles and swap them, or any of the goal tiles and try to score
         #           if any action can't be taken, just allow the machine to take it but nothing happens and there is no reward
@@ -73,7 +74,7 @@ class RLPlayer:
                 
                 (r1, c1), (r2, c2) = swap
 
-                print("Swapping", (r1, c1), "and", (r2, c2))
+                #print("Swapping", (r1, c1), "and", (r2, c2))
 
                 if self.game.swap(r1, c1, r2, c2):
                     reward = 0
@@ -130,7 +131,8 @@ class RLPlayer:
                     swaps.append( ((r1, c1), (r2, c2)) )
                     potential_boards.append(swapped_board)
 
-        predictions = self.nn.predict(estimatorModel.split_into_channels(potential_boards)).flatten()
+        #predictions = self.nn.predict(estimatorModel.split_into_channels(potential_boards)).flatten()
+        predictions = np.array([BoardScorer.analyze_board(b)[0] for b in potential_boards])
 
         best_index = predictions.argmax()
 
@@ -198,13 +200,13 @@ if __name__ == "__main__":
         train_labels = []
         
         # generate a few episodes at a time so it can train on a larger set of data
-        for i in range(0, 10):
+        for i in range(0, 1):
             boards, labels = player.generate_episode()
             train_boards = train_boards + boards
             train_labels = train_labels + labels
 
         train_features = estimatorModel.split_into_channels(train_boards)
         
-        player.nn.fit(train_features, train_labels, epochs=5, batch_size=64)
+        player.nn.fit(train_features, train_labels, epochs=1, batch_size=64)
 
         player.nn.save("RLPlayer.h5")

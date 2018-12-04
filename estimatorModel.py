@@ -3,7 +3,7 @@ import sys
 import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D
-from tensorflow.keras.layers import Dense, Dropout, Flatten
+from tensorflow.keras.layers import Dense, Dropout, Flatten, BatchNormalization
 from tensorflow.keras.layers import concatenate
 from tensorflow.keras.utils import plot_model
 
@@ -116,7 +116,7 @@ def split_inputs(dataset, input_shape=(8, 10, 1)):
     return separated_data
 
 
-def define_model(filters=32, shape=(8, 10, 5)):
+def define_model(filters=16, shape=(8, 10, 5)):
     """Defines a deep convolutional net that can be used for Superball.
 
     Arguments:
@@ -128,11 +128,15 @@ def define_model(filters=32, shape=(8, 10, 5)):
         (tf.keras model): A trainable model of a convolutional net.
     """
     model = Sequential([
-        Conv2D(filters=filters, kernel_size=(5, 5), strides=(1, 1), activation='relu', input_shape=shape),
-        Dropout(0.5),
+        Conv2D(filters=filters, kernel_size=(3, 3), strides=(2, 2), activation='linear', input_shape=shape),
+        #BatchNormalization(),
+        Conv2D(filters=filters*2, kernel_size=(3, 3), strides=(1, 1), activation='linear', input_shape=shape),
+        #Conv2D(filters=filters, kernel_size=(2, 2), strides=(1, 1), activation='linear'),
+        #BatchNormalization(),
         #MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),
         Flatten(),
-        Dense(64, activation='relu'),
+        Dense(80, activation='linear'),
+        Dropout(0.5),
         Dense(1) # Default activation is linear: y(x)=x
     ])
     model.compile(loss='mse', optimizer='adam', metrics=['mse', 'mae', 'mape'])
@@ -153,11 +157,16 @@ def split_into_channels(dataset):
     """
     new_dataset = []
     for i in range(len(dataset)):
+        board = dataset[i]
         channels = np.zeros((8, 10, len(tiles)), dtype='int_')
-        for t in range(len(tiles)):
-            for b in range(len(dataset[i])):
-                if (dataset[i][b] == tiles[t]):
-                    channels[b//10][b%10][t] = 1
+        for b in range(len(board)):
+            row = b // 10
+            col = b % 10
+            tile = board[b]
+            for t in range(len(tiles)):
+                color = tiles[t]
+                if (tile == color):
+                    channels[row][col][t] = 1
         new_dataset.append(channels)
     return np.array(new_dataset)
 
