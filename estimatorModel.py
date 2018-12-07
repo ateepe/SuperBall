@@ -116,7 +116,7 @@ def split_inputs(dataset, input_shape=(8, 10, 1)):
     return separated_data
 
 
-def define_model(filters=16, shape=(8, 10, 5)):
+def define_model(filters=32, shape=(8, 10, 5)):
     """Defines a deep convolutional net that can be used for Superball.
 
     Arguments:
@@ -128,14 +128,14 @@ def define_model(filters=16, shape=(8, 10, 5)):
         (tf.keras model): A trainable model of a convolutional net.
     """
     model = Sequential([
-        Conv2D(filters=filters, kernel_size=(3, 3), strides=(2, 2), activation='linear', input_shape=shape),
+        Conv2D(filters=16, kernel_size=(2, 2), strides=(1, 1), activation='relu', input_shape=shape),
         #BatchNormalization(),
-        Conv2D(filters=filters*2, kernel_size=(3, 3), strides=(1, 1), activation='linear', input_shape=shape),
+        Conv2D(filters=512, kernel_size=(3, 3), strides=(1, 1), activation='relu', input_shape=shape),
         #Conv2D(filters=filters, kernel_size=(2, 2), strides=(1, 1), activation='linear'),
         #BatchNormalization(),
         #MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),
         Flatten(),
-        Dense(80, activation='linear'),
+        Dense(80, activation='relu'),
         Dropout(0.5),
         Dense(1) # Default activation is linear: y(x)=x
     ])
@@ -167,6 +167,7 @@ def split_into_channels(dataset):
                 color = tiles[t]
                 if (tile == color):
                     channels[row][col][t] = 1
+                    break
         new_dataset.append(channels)
     return np.array(new_dataset)
 

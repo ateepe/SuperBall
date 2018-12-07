@@ -16,6 +16,7 @@ class RLPlayer:
     def __init__(self, nRows=8, nCols=10, goals=SuperBall.default_goals, colors=SuperBall.default_colors, minSetSize=5):
         self.game = SuperBall.SuperBall(nRows, nCols, goals, colors, minSetSize);
         self.discount_factor = 0.9
+        self.alpha = 0.1
 
         # actions = pick any two tiles and swap them, or any of the goal tiles and try to score
         #           if any action can't be taken, just allow the machine to take it but nothing happens and there is no reward
@@ -31,8 +32,7 @@ class RLPlayer:
         except:
             self.nn = estimatorModel.define_model()
 
-
-    def generate_episode(self):
+    def generate_episode(self, bOffline=False):
         self.game.StartGame()
 
         #print(self.game.board)
@@ -61,16 +61,17 @@ class RLPlayer:
 
                     print("scoring", (score_row, score_col))
 
-                    reward = self.game.score(score_row, score_col)
+                    #reward = self.game.score(score_row, score_col)
+                    reward = self.game.score_ignore_color(score_row, score_col)
 
                     if reward <= 0:
                         print("something messed up, tried to score when we can't")
                         exit(0)
 
-                    reward = 1 #override to ignore actual value of scoring set and just train to score more sets
+                    #reward = 1 #override to ignore actual value of scoring set and just train to score more sets
 
             else:
-                swap, intermediate_board = self.choose_swap(self.game.board)
+                swap, intermediate_board = self.choose_swap(self.game.board, bOffline=bOffline)
                 
                 (r1, c1), (r2, c2) = swap
 
@@ -99,9 +100,14 @@ class RLPlayer:
                 final_score = scores[2]
 
 
-                reward = 0 # override reward of 0 for all things that are not losing 
+                #reward = 0 # override reward of 0 for all things that are not losing 
                 train_boards.append(starting_board)
-                train_labels.append(reward + self.discount_factor * final_score)
+                corrected_score = starting_score + self.alpha * ((reward + self.discount_factor * final_score) - starting_score)
+                train_labels.append(corrected_score)
+
+                print("starting board score: ", starting_score)
+                print("corrected board score:", corrected_score)
+                #print("shifting board score of ", starting_score, "to", corrected_score)
 
 
             #print(self.game.board)
@@ -111,7 +117,7 @@ class RLPlayer:
 
     # returns swapped indices and resulting board
     #  ( (index1, index2), board )
-    def choose_swap(self, board):
+    def choose_swap(self, board, bOffline=False):
         
         swaps = []
         potential_boards = []
@@ -131,11 +137,30 @@ class RLPlayer:
                     swaps.append( ((r1, c1), (r2, c2)) )
                     potential_boards.append(swapped_board)
 
-        #predictions = self.nn.predict(estimatorModel.split_into_channels(potential_boards)).flatten()
-        predictions = np.array([BoardScorer.analyze_board(b)[0] for b in potential_boards])
+        if bOffline:
+            predictions = np.array([BoardScorer.analyze_board(b)[0] for b in potential_boards])
+        else:
+            predictions = self.nn.predict(estimatorModel.split_into_channels(potential_boards)).flatten()
 
         best_index = predictions.argmax()
 
+        '''
+        from sortedcontainers import SortedDict
+
+        sd = SortedDict()
+        for i in range(len(potential_boards)):
+            sd[predictions[i]] = potential_boards[i]
+        
+        #for val, board in sd.items():
+            #print("board value: ", val)
+            #self.print_board(board)
+        '''
+        
+        #print("\n\n")
+        print("chose index", best_index)
+        #print(predictions[best_index])
+        #self.print_board(potential_boards[best_index])
+        
         return (swaps[best_index], potential_boards[best_index])
 
     # returns scored tile and resulting board
@@ -188,22 +213,31 @@ class RLPlayer:
         score = self.nn.predict(features).flatten()[0]
         return score
 
-    # TODO: train network on observed data
-    def train_network(self):
-        pass
+    def print_board(self, board):
+        for r in range(self.game.numRows):
+            for c in range(self.game.numCols):
+                print(board[r*self.game.numCols + c], end="")
+            print()
 
 if __name__ == "__main__":
     player = RLPlayer()
 
+    episode_number = 1
     while True:
         train_boards = []
         train_labels = []
         
         # generate a few episodes at a time so it can train on a larger set of data
         for i in range(0, 1):
-            boards, labels = player.generate_episode()
+            if (episode_number % 1) == 0:
+                print("offline")
+                boards, labels = player.generate_episode(bOffline=True)
+            else:
+                print("online")
+                boards, labels = player.generate_episode(bOffline=False)
             train_boards = train_boards + boards
             train_labels = train_labels + labels
+            episode_number = episode_number + 1
 
         train_features = estimatorModel.split_into_channels(train_boards)
         

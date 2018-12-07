@@ -86,6 +86,37 @@ class SuperBall:
 
         return score
 
+    # same as score but ignores the scoring set's color in the score calculation,
+    # just returning the number of tiles that were scored
+    def score_ignore_color(self, row, col):
+        index = row * self.numCols + col
+
+        if (not self.goals[index] or self.board[index] == '.'):
+            return 0
+
+        score = 0
+        djSet = self.getDJSet()
+        setSize = djSet.getSetSize(index)
+
+        if setSize < self.minSetSize:
+            return 0
+        
+        #score = setSize * colorValue
+        score = setSize #ignore color value
+
+        self.totalScore += score
+
+        scoringSetID = djSet.getSetID(index)
+        for i in range(self.numTiles):
+            if djSet.getSetID(i) == scoringSetID:
+                self.board[i] = '.'
+        
+        self.numOpenTiles += setSize
+
+        self.spawnTiles(3)
+
+        return score
+
     def canSwap(self, row1, col1, row2, col2):
         index1 = row1 * self.numCols + col1
         index2 = row2 * self.numCols + col2
