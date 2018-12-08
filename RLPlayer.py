@@ -229,18 +229,18 @@ if __name__ == "__main__":
         
         # generate a few episodes at a time so it can train on a larger set of data
         for i in range(0, 1):
-            if (episode_number % 1) == 0:
+            if (episode_number % 1) == 0 and False:
                 print("offline")
-                boards, labels = player.generate_episode(bOffline=True)
+                boards, labels = player.generate_episode(bOffline=True) # offline learn from hard coded algorithm
             else:
                 print("online")
-                boards, labels = player.generate_episode(bOffline=False)
+                boards, labels = player.generate_episode(bOffline=False) # network learns online by self
             train_boards = train_boards + boards
             train_labels = train_labels + labels
             episode_number = episode_number + 1
 
-        train_features = estimatorModel.split_into_channels(train_boards)
+        #train_features = estimatorModel.split_into_channels(train_boards)
         
-        player.nn.fit(train_features, train_labels, epochs=1, batch_size=64)
+        #player.nn.fit(train_features, train_labels, epochs=1, batch_size=64)
 
-        player.nn.save("RLPlayer.h5")
+        #player.nn.save("RLPlayer.h5")

@@ -5,12 +5,13 @@ import pickle
 import copy
 
 if __name__ == "__main__":
+    print("run 13")
     player = SuperBall.SuperBall()
 
     boards = []
     rewards = []
 
-    for i in range(0, 100):
+    for i in range(0, 75):
         print("episode", i)
 
         player.StartGame()
@@ -76,5 +77,5 @@ if __name__ == "__main__":
 
                 #print("swap", best_swap, "reward = ", reward)
 
-    pickle.dump(boards, open("boards.pickle", "wb"))
-    pickle.dump(rewards, open("rewards.pickle", "wb"))
+    pickle.dump(boards, open("boards13.pickle", "wb"))
+    pickle.dump(rewards, open("rewards13.pickle", "wb"))
